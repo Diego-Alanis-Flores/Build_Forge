@@ -1,7 +1,5 @@
 package com.example.build_forge
 
-
-
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -115,6 +113,10 @@ class BuildViewModel : ViewModel() {
     var arma by mutableStateOf<Arma?>(null)
         private set
 
+    // Mensaje de error del login (null = no hay error)
+    var errorLogin by mutableStateOf<String?>(null)
+        private set
+
     val videojuegos: List<Videojuego> = videojuegosEjemplo
     val mejorasElegidas = mutableStateListOf<Mejora>()
     val buildsGuardadas = mutableStateListOf<Build>()
@@ -125,7 +127,18 @@ class BuildViewModel : ViewModel() {
     val resultado: Estadisticas?
         get() = arma?.let { CalculadoraMejoras.calcular(it.base, mejorasElegidas) }
 
-    fun entrar() { pantalla = Pantalla.VIDEOJUEGOS }
+    // Revisa usuario y contraseña. Si están bien, entra a la app
+    fun iniciarSesion(usuario: String, contrasena: String) {
+        if (usuario == "admin" && contrasena == "123") {
+            errorLogin = null
+            pantalla = Pantalla.VIDEOJUEGOS
+        } else {
+            errorLogin = "Nombre o contraseña equivocada"
+        }
+    }
+
+    // Quita el aviso rojo cuando empiezan a escribir otra vez
+    fun limpiarError() { errorLogin = null }
 
     fun explorar() { pantalla = Pantalla.VIDEOJUEGOS }
 

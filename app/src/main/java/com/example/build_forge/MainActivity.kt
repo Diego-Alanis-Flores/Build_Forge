@@ -6,6 +6,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -17,10 +18,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -36,7 +40,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -45,8 +48,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -98,7 +104,11 @@ fun BuildForgeApp(vm: BuildViewModel) {
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         if (vm.pantalla == Pantalla.BIENVENIDA) {
-            PantallaBienvenida(onEntrar = { vm.entrar() })
+            PantallaBienvenida(
+                error = vm.errorLogin,
+                onEntrar = { usuario, contrasena -> vm.iniciarSesion(usuario, contrasena) },
+                onEscribir = { vm.limpiarError() }
+            )
         } else {
             Scaffold(
                 containerColor = Fondo,
@@ -124,9 +134,16 @@ fun BuildForgeApp(vm: BuildViewModel) {
     }
 }
 
-// ---------- PANTALLA 1: BIENVENIDA ----------
+// ---------- PANTALLA 1: BIENVENIDA / LOGIN ----------
 @Composable
-fun PantallaBienvenida(onEntrar: () -> Unit) {
+fun PantallaBienvenida(
+    error: String?,
+    onEntrar: (String, String) -> Unit,
+    onEscribir: () -> Unit
+) {
+    var usuario by remember { mutableStateOf("") }
+    var contrasena by remember { mutableStateOf("") }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -135,6 +152,16 @@ fun PantallaBienvenida(onEntrar: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        // Logo de la app (archivo logo_build_forge.png en res/drawable)
+        Image(
+            painter = painterResource(R.drawable.logo_build_forge),
+            contentDescription = "Logo",
+            modifier = Modifier
+                .size(80.dp)
+                .clip(CircleShape)
+        )
+        Spacer(Modifier.height(12.dp))
+
         Text("BUILD FORGE", fontSize = 36.sp, fontWeight = FontWeight.Bold, color = Azul)
         Spacer(Modifier.height(8.dp))
         Text(
@@ -142,20 +169,54 @@ fun PantallaBienvenida(onEntrar: () -> Unit) {
             color = Gris,
             textAlign = TextAlign.Center
         )
-        Spacer(Modifier.height(48.dp))
+        Spacer(Modifier.height(32.dp))
+
+        // Fila de usuario: texto a la izquierda y campo a un lado
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Usuario:", modifier = Modifier.width(100.dp))
+            OutlinedTextField(
+                value = usuario,
+                onValueChange = { usuario = it; onEscribir() },
+                placeholder = { Text("Usuario") },
+                singleLine = true,
+                shape = Esquinas,
+                modifier = Modifier.weight(1f)
+            )
+        }
+        Spacer(Modifier.height(12.dp))
+
+        // Fila de contraseña: igual, texto a la izquierda y campo a un lado
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Contraseña:", modifier = Modifier.width(100.dp))
+            OutlinedTextField(
+                value = contrasena,
+                onValueChange = { contrasena = it; onEscribir() },
+                placeholder = { Text("••••••") },
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation(),
+                shape = Esquinas,
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        // Aviso si se equivocan
+        if (error != null) {
+            Spacer(Modifier.height(12.dp))
+            Text(error, color = MaterialTheme.colorScheme.error)
+        }
+
+        Spacer(Modifier.height(24.dp))
         Button(
-            onClick = onEntrar,
+            onClick = { onEntrar(usuario, contrasena) },
             shape = Esquinas,
             modifier = Modifier.fillMaxWidth().height(52.dp)
-        ) { Text("Entrar con mi cuenta") }
-        Spacer(Modifier.height(12.dp))
-        OutlinedButton(
-            onClick = onEntrar,
-            shape = Esquinas,
-            modifier = Modifier.fillMaxWidth().height(52.dp)
-        ) { Text("Continuar con Google") }
-        Spacer(Modifier.height(12.dp))
-        TextButton(onClick = onEntrar) { Text("Entrar sin cuenta") }
+        ) { Text("Entrar") }
     }
 }
 
