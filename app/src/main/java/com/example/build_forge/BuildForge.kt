@@ -1,10 +1,12 @@
 package com.example.build_forge
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import org.mindrot.jbcrypt.BCrypt
 
 // ---------- PANTALLAS ----------
 enum class Pantalla { BIENVENIDA, VIDEOJUEGOS, ARMAS, DETALLE, BUILD, MIS_BUILDS }
@@ -127,9 +129,18 @@ class BuildViewModel : ViewModel() {
     val resultado: Estadisticas?
         get() = arma?.let { CalculadoraMejoras.calcular(it.base, mejorasElegidas) }
 
+    // ---------- BCRYPT ----------
+    // Hash bcrypt de la contraseña "123" (se genera al abrir la app)
+    private val hashAdmin: String = BCrypt.hashpw("123", BCrypt.gensalt())
+
+    init {
+        // "Print" en la terminal: búscalo en Logcat con el filtro BCRYPT
+        Log.d("BCRYPT", "Hash de la contraseña: $hashAdmin")
+    }
+
     // Revisa usuario y contraseña. Si están bien, entra a la app
     fun iniciarSesion(usuario: String, contrasena: String) {
-        if (usuario == "admin" && contrasena == "123") {
+        if (usuario == "admin" && BCrypt.checkpw(contrasena, hashAdmin)) {
             errorLogin = null
             pantalla = Pantalla.VIDEOJUEGOS
         } else {
